@@ -1,0 +1,144 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no, width=device-width">
+    <title>熊猫很忙门店分布</title>
+  <script src="https://webapi.amap.com/maps?v=2.0&key=d442dddc0157fa67e399e366d87ca3d4&plugin=AMap.MapboxVectorTileLayer"></script>
+    <style>
+        html,
+        body,
+        #container {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+<div id="container"></div>
+<!-- <script type="text/javascript">
+    window._AMapSecurityConfig = {
+      securityJsCode: "b175d96e284efcfb561a4fa2d2f2d8df",
+    };,113.548804, 22.917960
+  </script> -->
+<script>
+    var map = new AMap.Map('container', {
+      	center: [113.548804, 22.917960],
+      	zoom: 10.5,
+        mapStyle: 'amap://styles/whitesmoke',
+        showBuildingBlock: false,
+        showIndoorMap: false,
+        showLabel: true,
+        viewMode: '3D',
+   	});
+
+    var marker = new AMap.Marker({
+        position: [113.729172, 23.051858], //位置
+        title:'中心仓',
+        icon:'https://webapi.amap.com/images/0.png'
+    });
+    map.add(marker); //添加到地图
+
+        // 设置鼠标划过点标记显示的文字提示
+    // marker.setTitle('中心仓');
+
+    // 设置label标签
+    // label默认蓝框白底左上角显示，样式className为：amap-marker-label
+    marker.setLabel({
+        offset: new AMap.Pixel(0, 20),  //设置文本标注偏移量
+        content: "<div class='info'>中心仓</div>", //设置文本标注内容
+        direction: 'up' //设置文本标注方位
+    });
+
+    var mvtLayer = new AMap.MapboxVectorTileLayer({
+        zIndex: 9,
+        opacity: 5,
+        // URL: "amap://mvt/75060ab2-b12d-44a1-bb51-f41b693607f9",
+        url: 'https://restapi.amap.com/rest/lbs/geohub/tiles/mvt?z=[z]&x=[x]&y=[y]&size=512&key=f77658ea715898ebff9fb229b131fe32&id=75060ab2-b12d-44a1-bb51-f41b693607f9',
+        dataZooms: [1, 18],
+        tileSize: 256,
+        styles: {
+          polygon: {
+            sourceLayer: 'default',
+            color: 'rgba(62,110,255,0.3)',
+            borderColor: '#3E6EFF',
+            borderWidth: 2,
+            visible: 1
+          },
+          line: {
+            sourceLayer: 'default',
+            color: '#3E6EFF',
+            lineWidth: 2,
+            visible: 1
+          },
+          point: {
+            sourceLayer: 'default',
+            radius: 6,
+            color:  '#3E6EFF',
+            borderColor: '#FFFFFF',
+            borderWidth: 2,
+            visible: 1
+          }
+        },
+      });
+    map.add(mvtLayer);
+
+
+  	// mvtLayer.on('click', (e) => {
+    //   const { polygon } = e.features;
+    //   if (polygon[0]) {
+    //     const { properties } = polygon[0];
+    //     const area = properties['属性1'];
+    //     const infoWindow = new AMap.InfoWindow({
+    //         content: `
+    //         <p>属性1：${properties['属性1']}</p>
+    //         <p>属性2：${properties['属性2']}</p>
+    //         `
+    //     });
+    //     infoWindow.open(map, e.origin.lnglat);
+    //   }
+    // });
+    var getMvtIds = (features) => {
+      const ids = new Set();
+      for (const key in features) {
+        const curFeature = features[key];
+        if (curFeature.length > 0) {
+          curFeature.forEach((item) => {
+            ids.add(item.properties.gid);
+          });
+        }
+      }
+      return Array.from(ids);
+    };
+  	mvtLayer.on('mousemove', (e) => {
+      const ids = getMvtIds(e.features);
+      const injection = [ids, '#3E6EFF', 'rgba(62,110,255,0.3)', '#FC3E3E', 'rgba(252,62,62,0.3)'];
+      function color({ gid }, injection) {
+        return injection[0].includes(gid) ? injection[3] : injection[1];
+      }
+      mvtLayer.setStyle({
+        point: {
+          injection,
+          color
+        },
+        line: {
+          injection,
+          color
+        },
+        polygon: {
+          injection,
+          color: function ({ gid }, injection) {
+            return injection[0].includes(gid) ? injection[4] : injection[2];
+          },
+          borderColor: color,
+        },
+      })
+    });
+
+    console.log(map.getOptions())
+</script>
+</body>
+</html>
