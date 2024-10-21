@@ -42,6 +42,35 @@
             color: #8E939D;
         }
     </style>
+    <style type="text/css">
+        #panel {
+            position: fixed;
+            background-color: white;
+            max-height: 90%;
+            overflow-y: auto;
+            top: 10px;
+            right: 10px;
+            width: 280px;
+        }
+        #panel.amap-call {
+            background-color: #009cf9;
+            border-top-left-radius: 4px;
+   	        border-top-right-radius: 4px;
+        }
+        #panel.amap-lib-driving {
+	        border-bottom-left-radius: 4px;
+   	        border-bottom-right-radius: 4px;
+            overflow: hidden;
+        }
+    </style>
+    <script type="text/javascript">
+        window._AMapSecurityConfig = {
+          securityJsCode: "b175d96e284efcfb561a4fa2d2f2d8df",
+        };
+    </script>
+    <link rel="stylesheet" href="https://a.amap.com/jsapi_demos/static/demo-center/css/demo-center.css" />
+    <script src="https://a.amap.com/jsapi_demos/static/demo-center/js/demoutils.js"></script>
+    <script type="text/javascript" src="https://webapi.amap.com/maps?v=2.0&key=d442dddc0157fa67e399e366d87ca3d4&plugin=AMap.Driving"></script>
 </head>
 
 <body>
@@ -50,9 +79,11 @@
       	<!-- <h3>使用Loca数据源展示海量点标注</h3> -->
     </div>
     <div id="map"></div>
-    <script src="https://webapi.amap.com/maps?v=2.0&key=d442dddc0157fa67e399e366d87ca3d4"></script>
+    <!-- <script src="https://webapi.amap.com/maps?v=2.0&key=d442dddc0157fa67e399e366d87ca3d4"></script> -->
     <script src="https://webapi.amap.com/loca?v=2.0.0&key=d442dddc0157fa67e399e366d87ca3d4"></script>
-	<script>
+
+    <div id="panel"></div>
+	<script type="text/javascript">
         var map = new AMap.Map('map', {
             zoom: 10,
             showLabel: false,
@@ -72,15 +103,22 @@
         var marker = new AMap.Marker({
         position: [113.729172, 23.051858], //位置
         title:'中心仓',
-        icon:'https://webapi.amap.com/images/0.png'
+        icon:'https://webapi.amap.com/images/0.png',
+        anchor: 'center'
         });
+
         map.add(marker); //添加到地图
+
+        marker.on('click', (e) => {
+                    console.log("中心仓：" + e.lnglat.getLng());
+                })
 
         var geo = new Loca.GeoJSONSource({
             url: 'https://chris-man334.github.io/wangmao_panda/shop_adress.geojson',
         });
+        
         labelsLayer.setSource(geo);
-      
+
       	// labelsLayer.setStyle的配置项即AMap.LabelMarker的配置项
         labelsLayer.setStyle({
             icon: {
@@ -109,29 +147,71 @@
         });
         loca.add(labelsLayer);
 
+        var centerWarehouseLngLat = [113.729172, 23.051858]
         labelsLayer.on('complete', () => {
             var normalMarker = new AMap.Marker({
                 offset: [70, -15],
             });
             var labelMarkers = labelsLayer.getLabelsLayer().getAllOverlays();
-            for (let marker of labelMarkers) {
-                marker.on('mouseover', (e) => {
+            for (let marker_1 of labelMarkers) {
+                marker_1.on('mouseover', (e) => {
                     var position = e.data.data && e.data.data.position;
 
                     if (position) {
                         normalMarker.setContent(
-                            '<div class="amap-info-window">店名：' + marker.getExtData().属性1 + '</div>',
+                            '<div class="amap-info-window">店名：' + marker_1.getExtData().属性1 + '</div>',
                         );
                         normalMarker.setPosition(position);
                         map.add(normalMarker);
                     }
                 });
-                marker.on('mouseout', () => {
+                marker_1.on('mouseout', () => {
                     map.remove(normalMarker);
                 });
+                marker_1.on('click', (e) => {
+                    console.log("门店：" + e.lnglat);
+                    var endLngLat = e.lnglat; // 获取点击的marker坐标
+                    showDrivingRoute(centerWarehouseLngLat, endLngLat);  
+                });  
+  
+                // return marker_1;  
             }
-        });
+        });  
 
+        function showDrivingRoute(startLngLat, endLngLat) {
+            // AMap.plugin('AMap.Driving', function() {
+            var driving = new AMap.Driving({ 
+                map: map,
+                panel: "panel",
+                policy: AMap.DrivingPolicy.LEAST_TIME, // 最短时间策略  
+                showTraffic: true // 显示实时路况  
+            });  
+
+            driving.search(startLngLat, endLngLat, function(status, result) {  
+                if (status === 'complete') {  
+                    // 清除之前的路线  
+                    // map.remove(driving.getOverlays());  
+                    map.remove(polyline)
+  
+                    // 添加新路线到地图  
+                    log.success('绘制驾车路线完成')
+                    var polyline = new AMap.Polyline({  
+                        path: result.routes[0].steps, // 规划路线  
+                        strokeColor: "#3366FF", // 线颜色  
+                        strokeOpacity: 1, // 线透明度  
+                        strokeWeight: 6, // 线宽  
+                        strokeStyle: "solid", // 线样式  
+                        strokeDasharray: [10, 5], // 虚线样式  
+                        lineJoin: 'round' // 折线拐点连接处样式  
+                    });  
+                    map.add(polyline);  
+                } else {  
+                    console.log('驾车规划失败: ' + result.info);  
+                }  
+            }); 
+        }
+
+    
   	</script>
 </body>
 
