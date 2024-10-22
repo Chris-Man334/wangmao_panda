@@ -1,4 +1,5 @@
 {
+"type": "FeatureCollection",
 "features": [
 { "type": "Feature", "properties": { "门店": "千灯湖店", "经度": 113.16143, "纬度": 23.049826 }, "geometry": { "type": "Point", "coordinates": [113.16143,23.049826] } },
 { "type": "Feature", "properties": { "门店": "容桂店", "经度": 113.271021, "纬度": 22.74985 }, "geometry": { "type": "Point", "coordinates": [113.271021,22.74985] } },
