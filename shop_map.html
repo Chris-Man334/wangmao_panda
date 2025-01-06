@@ -101,6 +101,10 @@
       <div class="input-card">
         <h4>功能切换</h4>
         <div class="input-item">
+            <input type="text" id="fine_shop" name="fine_shop" placeholder="格式:嘉禾店">
+            <button onclick="getInputValue()">查找</button>
+        </div>
+        <div class="input-item">
             <input type="radio" name='func' value='marker_point'><span class="input-text">画点</span>
             <input type="radio" name='func' value='polyline'><span class="input-text">画折线</span>
             <input type="radio" name='func' value='routeToggle'><span class="input-text">导航</span>
@@ -366,6 +370,24 @@
                 }
             }
         draw('marker')
+
+        function getInputValue() {
+            var inputElement = document.getElementById('fine_shop');
+            var inputValue = inputElement.value;
+            console.log(inputValue);  // 在控制台打印输入框的内容
+            var tangxiaDian = points.find(function(point) {
+                return point.name === inputValue;
+            });
+            if (tangxiaDian) {
+                var lnglat = tangxiaDian.lnglat;
+                console.log(lnglat); // 输出: ['113.380458', '23.121934']
+                map.setZoomAndCenter(25,tangxiaDian.lnglat)
+            } else {
+                log.success('未找到' + inputValue);
+            }
+        }
+
+
         // document.querySelector("#add-polyline").onclick = function() {
         //     map.plugin(["AMap.MouseTool"],function(){
         //     var mousetool = new AMap.MouseTool(map);
